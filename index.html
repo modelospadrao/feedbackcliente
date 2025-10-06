@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SAC Emergencial – ENEL</title>
+
+  <!-- html2pdf (salvar PDF) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+  <!-- html5-qrcode para leitura de QR com câmera -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.7/minified/html5-qrcode.min.js"></script>
+
+  <style>
+    /* ===== RESET E ESTILO BASE (visual amigável: tons de azul + verde) ===== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(180deg,#f4fbff,#f7fff5);
+      color: #0b2545;
+      padding: 28px;
+      -webkit-font-smoothing:antialiased;
+    }
+    header { text-align:center; margin-bottom:14px; }
+    h1 { color:#0077b6; font-size:28px; margin-bottom:6px; }
+    p.lead { color:#09426b; font-size:14px; margin-bottom:6px; }
+
+    .container {
+      max-width:980px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 20px 22px;
+      border-radius: 14px;
+      box-shadow: 0 8px 30px rgba(2,48,71,0.08);
+      border: 1px solid rgba(0,0,0,0.04);
+    }
+
+    label { display:block; font-weight:700; margin-bottom:6px; font-size:13px; text-transform:uppercase; color:#06314a; }
+    input[type="text"], input[type="tel"], textarea, select {
+      width:100%;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid #ddeff6;
+      margin-bottom:10px;
+      font-size:15px;
+      background:#fbfeff;
+    }
+    textarea { min-height:110px; resize:vertical; }
+
+    .row { display:flex; gap:14px; align-items:flex-start; }
+    .col { flex:1; min-width:0; }
+
+    /* Botões amigáveis */
+    .btn {
+      display:inline-block;
+      padding:10px 16px;
+      border-radius:12px;
+      border:1px solid transparent;
+      cursor:pointer;
+      background:#e6f6ff;
+      color:#06314a;
+      font-weight:700;
+      transition:all .16s ease;
+      box-shadow: 0 6px 14px rgba(2,48,71,0.05);
+    }
+    .btn.primary { background:#0077b6; color:#fff; }
+    .btn.accent { background:#00b894; color:#fff; }
+    .btn.ghost { background:transparent; border:1px solid #dfeff7; color:#06314a; }
+    .btn.warn { background:#ffb703; color:#06314a; }
+
+    .small-note { font-size:13px; color:#2e5b7a; margin-top:6px; }
+
+    .card {
+      background: linear-gradient(180deg,#ffffff,#fbfdff);
+      border-radius:12px;
+      padding:14px;
+      margin-bottom:12px;
+      border:1px solid rgba(2,48,71,0.03);
+    }
+
+    .option-grid { display:flex; gap:10px; flex-wrap:wrap; }
+    .option {
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid #d6eefb;
+      cursor:pointer;
+      user-select:none;
+      min-width:95px;
+      text-align:center;
+      font-weight:700;
+      background:#f4fcff;
+      color:#06314a;
+    }
+    .option.selected { background:#06314a; color:#fff; border-color:#06314a; }
+
+    .preview {
+      background: rgba(6,49,74,.95);
+      color:white;
+      padding:14px;
+      border-radius:10px;
+      font-family: "Courier New", Courier, monospace;
+      white-space:pre-wrap;
+      margin-top:12px;
+    }
+
+    .footer {
+      margin-top:18px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    .muted { color:#32607f; font-size:13px; }
+
+    /* Popup modal */
+    .modal-backdrop {
+      position:fixed; inset:0; background:rgba(3,18,31,0.55); display:flex; align-items:center; justify-content:center; z-index:9999;
+    }
+    .modal {
+      width:92%;
+      max-width:760px;
+      background:white;
+      border-radius:12px;
+      padding:18px;
+      box-shadow:0 20px 60px rgba(4,25,48,0.4);
+      text-align:left;
+    }
+    .modal h3 { margin-bottom:8px; color:#06314a; }
+    .modal p { color:#234e67; margin-bottom:12px; line-height:1.4; }
+
+    .scanner-box { width:100%; border-radius:10px; overflow:hidden; background:#000; min-height:240px; display:flex; align-items:center; justify-content:center; color:#fff; }
+
+    /* small */
+    .checkbox-inline { display:flex; gap:8px; align-items:center; font-size:14px; }
+    .hidden { display:none; }
+    @media (max-width:720px) {
+      .row { flex-direction:column; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>SAC Emergencial – ENEL</h1>
+    <p class="lead">Ajude-nos a melhorar. É rápido, seguro e opcional — leva menos de 1 minuto.</p>
+  </header>
+
+  <main class="container" id="app">
+    <!-- Informação introdutória -->
+    <div class="card">
+      <strong>Como usar</strong>
+      <p class="small-note">1) Para começar, você precisa <strong>ler o QR Code</strong> da equipe que atendeu você (é o QR que está no crachá / veículo / papel da equipe).<br>
+      2) O QR contém apenas o número da equipe — ao ler, o formulário será liberado e você poderá enviar seu feedback direto para essa equipe via WhatsApp.<br>
+      3) Nome e unidade são opcionais; <strong>endereço é requerido</strong> para identificarmos o local do atendimento.</p>
+    </div>
+
+    <!-- Passo 1: confirmação de consentimento -->
+    <!-- (Pop-up aparece automaticamente no carregamento) -->
+
+    <!-- Passo 2: seleção de quais dados compartilhar (pop-up) -->
+    <!-- (aparecerá após consentimento) -->
+
+    <!-- Formulário (bloqueado até QR lido e consentido) -->
+    <div id="formArea" class="hidden">
+      <div class="card">
+        <label for="clientAddress">Endereço (obrigatório)</label>
+        <input id="clientAddress" type="text" placeholder="Rua, nº, bairro - ex: Av. Exemplo, 123 - Bairro" oninput="updatePreview()" maxlength="180" />
+        <div class="small-note">Endereço é necessário para que possamos identificar o local do atendimento.</div>
+      </div>
+
+      <div class="row">
+        <div class="col card">
+          <label for="clientName">Nome (opcional)</label>
+          <input id="clientName" type="text" placeholder="Nome completo ou parcial (opcional)" oninput="updatePreview()" maxlength="80" />
+          <div class="checkbox-inline">
+            <input id="anonName" type="checkbox" onchange="toggleOptional('clientName', this)" />
+            <label for="anonName" style="text-transform:none; font-weight:600;">Prefiro não informar nome</label>
+          </div>
+        </div>
+
+        <div class="col card">
+          <label for="unit">Unidade Consumidora (opcional)</label>
+          <input id="unit" type="text" placeholder="Ex: 1234567890 (opcional)" oninput="updatePreview()" maxlength="60" />
+          <div class="checkbox-inline">
+            <input id="anonUnit" type="checkbox" onchange="toggleOptional('unit', this)" />
+            <label for="anonUnit" style="text-transform:none; font-weight:600;">Não informar Unidade Consumidora</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <label>Data / Hora do atendimento</label>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <input id="dateTime" type="text" placeholder="Clique em carregar data/hora" readonly />
+          <button class="btn" onclick="loadDateTime()">Carregar Data/Hora</button>
+          <button class="btn ghost" onclick="clearDateTime()">Limpar</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <label>Seu problema foi solucionado?</label>
+        <div class="option-grid">
+          <div class="option" data-value="Sim" onclick="pickOption(this,'resolved')">✅ Sim</div>
+          <div class="option" data-value="Parcialmente" onclick="pickOption(this,'resolved')">🟡 Parcialmente</div>
+          <div class="option" data-value="Não" onclick="pickOption(this,'resolved')">❌ Não</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <label>Como você avalia o atendimento?</label>
+        <div class="option-grid">
+          <div class="option" data-value="Ótimo" onclick="pickOption(this,'rating')">⭐ Ótimo</div>
+          <div class="option" data-value="Bom" onclick="pickOption(this,'rating')">🙂 Bom</div>
+          <div class="option" data-value="Regular" onclick="pickOption(this,'rating')">😐 Regular</div>
+          <div class="option" data-value="Ruim" onclick="pickOption(this,'rating')">😞 Ruim</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <label>Deseja que entremos em contato novamente?</label>
+        <div class="option-grid">
+          <div class="option" data-value="Sim" onclick="pickOption(this,'contactAgain')">📞 Sim</div>
+          <div class="option" data-value="Não" onclick="pickOption(this,'contactAgain')">✖️ Não</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <label for="comments">Comentários / Sugestões (opcional)</label>
+        <textarea id="comments" placeholder="Descreva brevemente o que ocorreu..." oninput="updatePreview()"></textarea>
+      </div>
+
+      <!-- hidden team phone (populated from QR) -->
+      <input id="teamPhone" type="hidden" value="" />
+
+      <div class="footer">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn ghost" onclick="clearForm()">🧹 Limpar</button>
+          <button class="btn" onclick="copyPreview()">📋 Copiar</button>
+          <button class="btn" onclick="savePdf()">🗎 Gerar PDF</button>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button id="sendWhatsBtn" class="btn primary" onclick="sendWhats()" disabled>💬 Enviar via WhatsApp</button>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label>Pré-visualização</label>
+        <div class="preview" id="preview">Preencha os campos e o feedback aparecerá aqui.</div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px; text-align:center;" id="manualHint" class="muted hidden">
+      <small>Se preferir, peça para a equipe enviar novamente o QR Code ou clique em "Ler QR Code" abaixo.</small>
+    </div>
+
+    <div style="margin-top:14px; text-align:center;">
+      <button id="openScannerBtn" class="btn accent" onclick="openScannerPopup()">📷 Ler QR Code da equipe</button>
+    </div>
+  </main>
+
+  <!-- MODALS -->
+
+  <!-- Consent Modal (shown on load) -->
+  <div id="consentModal" class="modal-backdrop" role="dialog" aria-modal="true" style="display:flex;">
+    <div class="modal">
+      <h3>Consentimento para uso de dados (opcional)</h3>
+      <p>Antes de continuar, precisamos do seu consentimento para utilizar algumas informações (nome, endereço, unidade) apenas para tratar este atendimento e melhorar nossos serviços. Essas informações <strong>não serão usadas para outras finalidades</strong> e não acarretam qualquer processo contra você.</p>
+      <p><strong>Você concorda em prosseguir?</strong></p>
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button class="btn ghost" onclick="declineConsent()">Não, prefiro não participar</button>
+        <button class="btn primary" onclick="acceptConsent()">Sim, concordo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share-data Modal (choose which fields to share) -->
+  <div id="shareModal" class="modal-backdrop" role="dialog" aria-modal="true" style="display:none;">
+    <div class="modal">
+      <h3>Quais informações você deseja compartilhar?</h3>
+      <p>Para facilitar nosso retorno à sua solicitação, você pode optar por compartilhar:</p>
+      <ul style="color:#234e67; margin-left:16px; margin-bottom:12px;">
+        <li><strong>Nome</strong> — opcional (completo ou parcial)</li>
+        <li><strong>Endereço</strong> — <strong>recomendado / obrigatório</strong> para identificarmos o local do atendimento</li>
+        <li><strong>Unidade Consumidora</strong> — opcional</li>
+      </ul>
+      <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:8px;">
+        <label class="checkbox-inline"><input id="shareName" type="checkbox" checked /> Compartilhar nome (opcional)</label>
+        <label class="checkbox-inline"><input id="shareAddress" type="checkbox" checked /> Compartilhar endereço (recomendado)</label>
+        <label class="checkbox-inline"><input id="shareUnit" type="checkbox" /> Compartilhar unidade (opcional)</label>
+      </div>
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button class="btn ghost" onclick="cancelShareModal()">Cancelar</button>
+        <button class="btn primary" onclick="confirmShareChoices()">Prosseguir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scanner Modal -->
+  <div id="scannerModal" class="modal-backdrop hidden" style="display:none;">
+    <div class="modal">
+      <h3>Leia o QR Code da equipe</h3>
+      <p>Posicione a câmera apontando para o QR Code que está com a equipe. O código deve conter apenas o número do WhatsApp (ex.: <code>5585999999999</code>).</p>
+      <div id="scannerArea" class="scanner-box">
+        <div id="qr-reader" style="width:100%;"></div>
+      </div>
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
+        <button class="btn ghost" onclick="closeScannerPopup()">Fechar</button>
+        <button class="btn primary" onclick="stopScanner()">Parar câmera</button>
+      </div>
+      <div style="margin-top:8px; color:#234e67; font-size:13px;">Dica: se a leitura falhar, aproxime o QR do aparelho e evite reflexos.</div>
+    </div>
+  </div>
+
+  <!-- Thanks Popup -->
+  <div id="thanksModal" class="modal-backdrop hidden" style="display:none;">
+    <div class="modal">
+      <h3>Obrigado!</h3>
+      <p id="thanksMsg">Seu feedback foi preparado com sucesso.</p>
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button class="btn primary" onclick="closeThanks()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /*********************
+     * Variáveis de estado
+     *********************/
+    let teamPhone = ''; // número capturado do QR (DDI+DDD+NUM, ex: 5585999999999)
+    let html5QrcodeScanner = null;
+    const state = { resolved: null, rating: null, contactAgain: null };
+
+    // Elementos
+    const consentModal = document.getElementById('consentModal');
+    const shareModal = document.getElementById('shareModal');
+    const scannerModal = document.getElementById('scannerModal');
+    const scannerBackdrop = document.getElementById('scannerModal');
+    const formArea = document.getElementById('formArea');
+    const previewEl = document.getElementById('preview');
+    const sendWhatsBtn = document.getElementById('sendWhatsBtn');
+    const manualHint = document.getElementById('manualHint');
+
+    /******************************
+     * Popups: consentimento inicial
+     ******************************/
+    function declineConsent() {
+      // caso o usuário recuse, mostramos mensagem curta e bloqueamos
+      consentModal.style.display = 'none';
+      document.body.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial,Helvetica,sans-serif;">
+          <div style="max-width:720px;text-align:center;padding:20px;">
+            <h2 style="color:#06314a;">Tudo bem — sua escolha será respeitada.</h2>
+            <p style="color:#234e67;">Se mudar de ideia, peça para a equipe fornecer o QR Code novamente ou volte para esta página quando desejar participar.</p>
+          </div>
+        </div>`;
+    }
+
+    function acceptConsent() {
+      consentModal.style.display = 'none';
+      // abrir modal de compartilhamento de campos
+      shareModal.style.display = 'flex';
+    }
+
+    /********************************
+     * Escolha de quais dados compartilhar
+     ********************************/
+    function cancelShareModal() {
+      // Voltar a consentimento (ou simplesmente fechar)
+      shareModal.style.display = 'none';
+      // permitir reabrir scanner mesmo que cancele
+      manualHint.classList.remove('hidden');
+    }
+
+    function confirmShareChoices() {
+      const shareName = document.getElementById('shareName').checked;
+      const shareAddress = document.getElementById('shareAddress').checked;
+      const shareUnit = document.getElementById('shareUnit').checked;
+
+      // Aplica escolhas: se não compartilhar, marcar as checkboxes correspondentes
+      if (!shareName) { document.getElementById('anonName').checked = true; toggleOptional('clientName', document.getElementById('anonName')); }
+      if (!shareUnit) { document.getElementById('anonUnit').checked = true; toggleOptional('unit', document.getElementById('anonUnit')); }
+      // Endereço: se usuário desmarcou compartilhar o endereço, ainda assim pedimos que informe (pois é obrigatório)
+      // mas respeitamos: se destina a não compartilhar, mostramos aviso — aqui, mantemos o campo ativo (recomendado)
+      shareModal.style.display = 'none';
+      // Agora pedimos para ler o QR Code antes de liberar formulário
+      openScannerPopup();
+    }
+
+    /*************************
+     * Scanner (html5-qrcode)
+     *************************/
+    function openScannerPopup() {
+      scannerModal.style.display = 'flex';
+      // inicia o leitor
+      startScanner();
+    }
+
+    function closeScannerPopup() {
+      stopScanner();
+      scannerModal.style.display = 'none';
+      manualHint.classList.remove('hidden');
+    }
+
+    function startScanner() {
+      const qrRegionId = "qr-reader";
+      const qrReader = document.getElementById(qrRegionId);
+      qrReader.innerHTML = ""; // reset
+      if (html5QrcodeScanner) {
+        // já iniciado anteriormente — parar e reiniciar
+        try { html5QrcodeScanner.stop().catch(()=>{}); } catch(e){}
+        html5QrcodeScanner = null;
+      }
+      html5QrcodeScanner = new Html5Qrcode(qrRegionId);
+
+      const config = { fps: 10, qrbox: { width: 300, height: 300 } };
+
+      html5QrcodeScanner.start(
+        { facingMode: "environment" },
+        config,
+        qrCodeMessage => {
+          // Quando ler o QR code, extrai e valida o número
+          onQrRead(qrCodeMessage);
+        },
+        errorMessage => {
+          // leitura em andamento — podemos ignorar erros de frame
+          // console.log("scan err", errorMessage);
+        }
+      ).catch(err => {
+        // permissão negada ou erro ao acessar câmera
+        alert('Erro ao acessar a câmera. Verifique permissões e tente novamente (HTTPS requerido fora do localhost).');
+        console.error(err);
+      });
+    }
+
+    function stopScanner() {
+      if (html5QrcodeScanner) {
+        html5QrcodeScanner.stop().then(() => {
+          try { html5QrcodeScanner.clear(); } catch(e) {}
+          html5QrcodeScanner = null;
+        }).catch(err => {
+          console.warn('erro ao parar scanner', err);
+          html5QrcodeScanner = null;
+        });
+      }
+    }
+
+    function onQrRead(text) {
+      // O QR deve conter apenas o número com DDI+DDD+NUM, sem "+"
+      const cleaned = text.trim().replace(/\D/g,'');
+      if (!cleaned.match(/^55\d{8,12}$/) && !cleaned.match(/^55\d+$/)) {
+        // Aceitamos números com DDI (55...) idealmente. Se não batem, mostramos alerta, mas permitimos.
+        // Mostramos confirmação ao usuário
+        if (!confirm(`Código lido: "${text}". Deseja usar esse valor como telefone da equipe?`)) {
+          return; // ignora e continua leitura
+        }
+      }
+
+      teamPhone = cleaned;
+      // para o scanner
+      stopScanner();
+      scannerModal.style.display = 'none';
+
+      // libera o formulário
+      enableFormAfterScan();
+    }
+
+    /*********************************
+     * Habilitar formulário e preview
+     *********************************/
+    function enableFormAfterScan() {
+      // teamPhone foi preenchido
+      if (!teamPhone) {
+        alert('Não foi possível identificar o número da equipe. Por favor, tente novamente.');
+        return;
+      }
+
+      // Esconde botão scanner (ou mantém disponível)
+      document.getElementById('openScannerBtn').textContent = '📷 QR lido — equipe identificada';
+      document.getElementById('openScannerBtn').classList.remove('accent');
+      document.getElementById('openScannerBtn').classList.add('ghost');
+      document.getElementById('openScannerBtn').disabled = true;
+
+      // Exibir formulário
+      formArea.classList.remove('hidden');
+      manualHint.classList.add('hidden');
+
+      // Atualizar preview e habilitar botão WA
+      updatePreview();
+      sendWhatsBtn.disabled = false;
+    }
+
+    /***********************
+     * Funções do formulário
+     ***********************/
+    function toggleOptional(fieldId, checkbox) {
+      const f = document.getElementById(fieldId);
+      if (checkbox.checked) {
+        f.value = '';
+        f.disabled = true;
+        f.placeholder = 'Não informado';
+      } else {
+        f.disabled = false;
+        // placeholders
+        if (fieldId === 'clientName') f.placeholder = 'Nome completo ou parcial (opcional)';
+        if (fieldId === 'unit') f.placeholder = 'Unidade consumidora (opcional)';
+      }
+      updatePreview();
+    }
+
+    function loadDateTime() {
+      const now = new Date();
+      const meses = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+      const dia = now.getDate().toString().padStart(2,'0');
+      const mes = meses[now.getMonth()];
+      const ano = now.getFullYear();
+      const hh = now.getHours().toString().padStart(2,'0');
+      const mm = now.getMinutes().toString().padStart(2,'0');
+      const formatted = `${dia} de ${mes} de ${ano} às ${hh}:${mm}`;
+      document.getElementById('dateTime').value = formatted;
+      updatePreview();
+    }
+
+    function clearDateTime() {
+      document.getElementById('dateTime').value = '';
+      updatePreview();
+    }
+
+    function pickOption(el, key) {
+      // Remove seleção do grupo
+      const parent = el.parentNode;
+      parent.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+      state[key] = el.getAttribute('data-value');
+      updatePreview();
+    }
+
+    function buildMessage() {
+      const nameEl = document.getElementById('clientName');
+      const addressEl = document.getElementById('clientAddress');
+      const unitEl = document.getElementById('unit');
+      const comments = document.getElementById('comments').value.trim();
+      const dt = document.getElementById('dateTime').value.trim();
+
+      const name = nameEl.disabled || !nameEl.value.trim() ? 'Não informado' : nameEl.value.trim();
+      const address = addressEl.value.trim() ? addressEl.value.trim() : 'Não informado';
+      const unit = unitEl.disabled || !unitEl.value.trim() ? 'Não informado' : unitEl.value.trim();
+
+      const lines = [];
+      lines.push('Feedback - SAC Emergencial (ENEL)');
+      lines.push('----------------------------------');
+      lines.push(`Data/Hora do envio: ${new Date().toLocaleString('pt-BR')}`);
+      lines.push('');
+      lines.push(`Data/Hora do atendimento: ${dt || 'Não informado'}`);
+      lines.push(`Endereço: ${address}`);
+      lines.push(`Nome: ${name}`);
+      lines.push(`Unidade Consumidora: ${unit}`);
+      lines.push('');
+      lines.push(`Problema solucionado: ${state.resolved || 'Não respondido'}`);
+      lines.push(`Avaliação do atendimento: ${state.rating || 'Não respondido'}`);
+      lines.push(`Deseja contato novamente: ${state.contactAgain || 'Não respondido'}`);
+      if (comments) {
+        lines.push('');
+        lines.push('Comentários:');
+        lines.push(comments);
+      }
+      lines.push('');
+      lines.push('(Enviado via formulário SAC Emergencial)');
+      return lines.join('\n');
+    }
+
+    function updatePreview() {
+      previewEl.textContent = buildMessage();
+    }
+
+    function copyPreview() {
+      navigator.clipboard.writeText(buildMessage()).then(() => {
+        showThanks('Texto copiado para a área de transferência.');
+      }).catch(() => {
+        showThanks('Não foi possível copiar automaticamente. Selecione e copie manualmente.');
+      });
+    }
+
+    function clearForm() {
+      document.getElementById('clientAddress').value = '';
+      document.getElementById('clientName').value = '';
+      document.getElementById('unit').value = '';
+      document.getElementById('dateTime').value = '';
+      document.getElementById('comments').value = '';
+      document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+      state.resolved = null; state.rating = null; state.contactAgain = null;
+      document.getElementById('anonName').checked = false;
+      document.getElementById('anonUnit').checked = false;
+      updatePreview();
+      showThanks('Formulário limpo.');
+    }
+
+    function savePdf() {
+      const content = buildMessage();
+      const el = document.createElement('div');
+      el.style.padding = '16px';
+      el.style.fontFamily = 'Arial, Helvetica, sans-serif';
+      el.innerText = content;
+      const dateStr = new Date().toISOString().slice(0,10);
+      const nameFile = `SAC_EMERGENCIAL_${dateStr}.pdf`;
+      html2pdf().set({
+        margin: 12,
+        filename: nameFile,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      }).from(el).save().then(()=> showThanks('PDF gerado com sucesso.'));
+    }
+
+    function sendWhats() {
+      if (!teamPhone) {
+        alert('Número da equipe não encontrado. Leia o QR Code da equipe para enviar o feedback.');
+        return;
+      }
+      // Verifica endereço obrigatório
+      const addressVal = document.getElementById('clientAddress').value.trim();
+      if (!addressVal) {
+        alert('Por favor, informe o ENDEREÇO do atendimento (é necessário).');
+        return;
+      }
+
+      const text = buildMessage();
+      const encoded = encodeURIComponent(text);
+
+      // Abre o WhatsApp no número capturado (assume número no formato sem "+", ex: 5585......)
+      const url = `https://wa.me/${teamPhone}?text=${encoded}`;
+      window.open(url, '_blank');
+      showThanks('Abrindo WhatsApp da equipe...');
+    }
+
+    /*********************
+     * pequenos helpers
+     *********************/
+    function showThanks(msg) {
+      const tm = document.getElementById('thanksModal');
+      document.getElementById('thanksMsg').innerText = msg;
+      tm.style.display = 'flex';
+    }
+    function closeThanks() {
+      document.getElementById('thanksModal').style.display = 'none';
+    }
+
+    /*********************
+     * Inicialização
+     *********************/
+    document.addEventListener('DOMContentLoaded', () => {
+      // mostra consent modal automaticamente (já visível por padrão)
+      // bloquear interações até aceitar. (consentModal está visível por padrão)
+      // Caso queira permitir um link com ?team=... para pré-carregar valor
+      // não o usaremos para liberar sem leitura: o requisito é que o cliente leia o QR
+      // porém vamos detectar se há param e mostrar sugestão (não libera automaticamente)
+      const urlParams = new URLSearchParams(window.location.search);
+      const possibleTeam = (urlParams.get('team') || '').replace(/\D/g,'');
+      if (possibleTeam) {
+        // se o gerente quiser, podemos mostrar sugestão ao usuário após consentimento
+        // guardamos temporariamente, mas NÃO liberamos sem leitura
+        window._prefillTeamCandidate = possibleTeam;
+        console.log('Team candidate from URL param:', possibleTeam);
+      }
+    });
+
+    // fechar modais com Esc
+    window.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        // fecha scanner se aberto
+        if (scannerModal.style.display === 'flex') closeScannerPopup();
+        if (document.getElementById('thanksModal').style.display === 'flex') closeThanks();
+      }
+    });
+
+    // Expor funções usadas por handlers inline
+    window.acceptConsent = acceptConsent;
+    window.declineConsent = declineConsent;
+    window.confirmShareChoices = confirmShareChoices;
+    window.cancelShareModal = cancelShareModal;
+    window.openScannerPopup = openScannerPopup;
+    window.closeScannerPopup = closeScannerPopup;
+    window.loadDateTime = loadDateTime;
+    window.clearDateTime = clearDateTime;
+    window.toggleOptional = toggleOptional;
+    window.pickOption = pickOption;
+    window.copyPreview = copyPreview;
+    window.savePdf = savePdf;
+    window.sendWhats = sendWhats;
+    window.clearForm = clearForm;
+    window.showThanks = showThanks;
+    window.closeThanks = closeThanks;
+
+  </script>
+</body>
+</html>
